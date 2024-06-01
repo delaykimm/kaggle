@@ -7,6 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/15gPqTRzLDxqVfvecKSaV8Z9lxz_P-UuE
 """
 
+"""### LIBRARY IMPORT """
 import math
 import pandas as pd
 import numpy as np
@@ -23,6 +24,8 @@ from tensorflow.keras.losses import MeanSquaredLogarithmicError
 from tensorflow.keras.losses import MeanSquaredError,BinaryCrossentropy,MeanAbsoluteError
 import tensorflow as tf
 import tensorflow_probability as tfp
+
+"""###DATA LOAD"""
 
 file_path = './train.csv'
 file_path2 = './test.csv'
@@ -72,6 +75,8 @@ df_no_outliers = df[outlier_condition.all(axis=1)]
 #print("\nDataFrame without Outliers:")
 #print(df_no_outliers)
 print(len(df_no_outliers))
+
+"""### Visualize Data"""
 
 from matplotlib import pyplot as plt
 df_no_outliers['Hardness'].plot(kind='hist', bins=20, title='val_e_Average')
@@ -143,11 +148,15 @@ model = build_model_with_dropconnect(input_shape, dropconnect_rate)
 #model.build((None, 11))
 model.summary()
 
+"""###Median Absolute Error"""
+
 def loss_fn(y_true, y_pred):
     return tfp.stats.percentile(tf.abs(y_true - y_pred), q=50)
 
 #def metric_fn(y_true, y_pred):
 #    return tfp.stats.percentile(tf.abs(y_true - y_pred), q=100) - tfp.stats.percentile(tf.abs(y_true - y_pred), q=0)
+
+"""###K-Fold Cross-Validation"""
 
 callbacks_list = [
     tf.keras.callbacks.EarlyStopping(
@@ -191,6 +200,8 @@ for fold, (train_indices, val_indices) in enumerate(kf.split(df_no_outliers)):
     val_loss, val_mae = model.evaluate(val_dataset)
     print(f"Validation Loss: {val_loss}, Validation MAE: {val_mae}")
 
+"""###Training with Full dataset"""
+
 # After all folds, if you want to train on the full dataset for more epochs:
 history = model.fit(
     df_no_outliers.iloc[:, :-1].values.astype('float32'),
@@ -201,9 +212,13 @@ history = model.fit(
     validation_split=0.2
 )
 
+"""###Prediction And Save Results"""
+
 y_pred = model.predict(X_test.astype('float32'))
 df_prediction = pd.DataFrame(y_pred)
 df_prediction
+
+"""###Visualize Result"""
 
 from matplotlib import pyplot as plt
 df_prediction[0].plot(kind='hist', bins=20, title=0)
